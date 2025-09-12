@@ -8,6 +8,10 @@ from dotenv import load_dotenv
 import os
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
+<<<<<<< Updated upstream
+=======
+from app.uuid_generator import deterministic_uuid_from_email
+>>>>>>> Stashed changes
 
 load_dotenv()
 CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
@@ -34,17 +38,17 @@ app.add_middleware(
 
 # Example data model
 class User(BaseModel):
-    uid: str
     email: str
-    first_name: str
-    last_name: str
-    reg_no: str
-    cgpa: float
+    firstName: str
+    lastName: str
     branch: str
-    passing_year: int
-    marks_10th: float
-    marks_12th: float
-    placement_drive_info: str
+    regNo: str
+    passingYear: int
+    cgpa: float
+    marks10th: float
+    marks12th: float
+    uid: str
+    placementDriveInfo: Optional[str] = ''
 
 class GoogleUser(BaseModel):
     uid: str
@@ -64,7 +68,19 @@ async def root():
 # Add or update a user
 @app.post("/api/users/")
 async def add_user(user: User):
-    f_add_user(**user.model_dump())
+    f_add_user(
+        uid=user.uid,
+        email=user.email,
+        first_name=user.firstName,
+        last_name=user.lastName,
+        reg_no=user.regNo,
+        cgpa=user.cgpa,
+        branch=user.branch,
+        passing_year=user.passingYear,
+        marks_10th=user.marks10th,
+        marks_12th=user.marks12th,
+        placement_drive_info=user.placementDriveInfo
+    )
     return {"message": f"User {user.uid} added/updated successfully."}
 
 
@@ -106,6 +122,7 @@ async def google_auth_callback(request: Request):
         user_info_service = build("oauth2", "v2", credentials=credentials)
         user_info = user_info_service.userinfo().get().execute()
 
+<<<<<<< Updated upstream
         print("User info fetched:", user_info)
 
         return JSONResponse({
@@ -114,6 +131,14 @@ async def google_auth_callback(request: Request):
             "email": user_info.get("email"),
             "name": user_info.get("name"),
         })
+=======
+        uid = str(deterministic_uuid_from_email(user_info.get("email")))
+
+        print("User info fetched:", user_info)
+
+        if f_get_user(uid): return JSONResponse(status_code = 200, content={'uid':uid})
+        else: return JSONResponse(status_code = 404, content={'uid':uid})
+>>>>>>> Stashed changes
 
     except Exception as e:
         print("Exception occurred in callback:", e)

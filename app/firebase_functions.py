@@ -33,10 +33,11 @@ def f_get_user(uid: str):
     """
     doc = db.collection("users").document(uid).get()
     if doc.exists:
-        return doc.to_dict()
+        print(f'User {uid} found')
+        return True
     else:
         print(f"User {uid} not found.")
-        return None
+        return False
 
 def f_get_branches():
     """
