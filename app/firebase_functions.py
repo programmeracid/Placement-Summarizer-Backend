@@ -45,7 +45,6 @@ def f_get_branches():
     docs = db.collection("branches").stream()
     return [doc.to_dict()["name"] for doc in docs]
 
-
 if __name__ == "__main__":
     print(f_get_branches())
 
