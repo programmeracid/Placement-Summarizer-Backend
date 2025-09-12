@@ -8,10 +8,7 @@ from dotenv import load_dotenv
 import os
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
-<<<<<<< Updated upstream
-=======
 from app.uuid_generator import deterministic_uuid_from_email
->>>>>>> Stashed changes
 
 load_dotenv()
 CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
@@ -122,23 +119,12 @@ async def google_auth_callback(request: Request):
         user_info_service = build("oauth2", "v2", credentials=credentials)
         user_info = user_info_service.userinfo().get().execute()
 
-<<<<<<< Updated upstream
-        print("User info fetched:", user_info)
-
-        return JSONResponse({
-            "access_token": credentials.token,
-            "refresh_token": credentials.refresh_token,
-            "email": user_info.get("email"),
-            "name": user_info.get("name"),
-        })
-=======
         uid = str(deterministic_uuid_from_email(user_info.get("email")))
 
         print("User info fetched:", user_info)
 
         if f_get_user(uid): return JSONResponse(status_code = 200, content={'uid':uid})
         else: return JSONResponse(status_code = 404, content={'uid':uid})
->>>>>>> Stashed changes
 
     except Exception as e:
         print("Exception occurred in callback:", e)
