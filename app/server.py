@@ -3,21 +3,30 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 from app.firebase_functions import *
-import requests
+from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
+import os
+from google_auth_oauthlib.flow import Flow
+from googleapiclient.discovery import build
 
 load_dotenv()
-import os
+CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
+CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
+REDIRECT_URI = os.getenv('REDIRECT_URI')
+SCOPES = [
+    "openid",
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/userinfo.profile",
+    "https://www.googleapis.com/auth/gmail.readonly"
+]
 
 
 # Initialize FastAPI app
 app = FastAPI(title="Placement Tracker API")
 
-origins = ["http://localhost:3000",
-           "http://27.5.78.173:8000"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,       # allow specific origins
+    allow_origins=["*"],       # allow all origins
     allow_credentials=True,
     allow_methods=["*"],         # allow all HTTP methods (GET, POST, etc.)
     allow_headers=["*"],         # allow all headers
@@ -48,64 +57,64 @@ class GoogleUser(BaseModel):
 
 # Root route
 @app.get("/")
-def root():
+async def root():
     return {"message": "Placement Tracker API is running!"}
 
 
 # Add or update a user
 @app.post("/api/users/")
-def add_user(user: User):
+async def add_user(user: User):
     f_add_user(**user.model_dump())
     return {"message": f"User {user.uid} added/updated successfully."}
 
 
 # Get a user by UID
 @app.get("/api/users/{uid}")
-def get_user(uid: str):
+async def get_user(uid: str):
     user = f_get_user(uid)
     if user:
         return user
     raise HTTPException(status_code=404, detail=f"User {uid} not found.")
 
 
-
-
 @app.get("/api/branches")
-def get_branches():
+async def get_branches():
     return { "branches" : f_get_branches()}
 
-@app.post("/api/auth/google")
-def get_google_auth(googleUser: GoogleUser):
-    
+@app.post("/api/auth/google/callback")
+async def google_auth_callback(request: Request):
+    data = await request.json()
+    print("Raw request data:", data)
 
-    print(googleUser)
+    code = data.get("code")
+    if not code:
+        raise HTTPException(status_code=400, detail="Missing authorization code")
 
-    # TODO: validate Firebase accessToken if needed
-    # TODO: save user data into Firestore/DB
+    flow = Flow.from_client_secrets_file(
+        'credentials.json',
+        scopes=SCOPES,
+        redirect_uri=REDIRECT_URI
+    )
 
-    return {
-        "message": "User data received successfully",
-        "uid": googleUser.uid,
-        "name": googleUser.name,
-        "email": googleUser.email
-    }
+    print("Auth flow initialized")
+    try:
+        # Exchange the code for tokens
+        flow.fetch_token(code=code)
+        credentials = flow.credentials
 
-GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
+        # Get user info
+        user_info_service = build("oauth2", "v2", credentials=credentials)
+        user_info = user_info_service.userinfo().get().execute()
 
-@app.get("/api/auth/callback")
-def auth_callback(request: Request, code: str):
-    data = {
-        "code": code,
-        "client_id": os.getenv("GOOGLE_CLIENT_ID"),
-        "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"),
-        "redirect_uri": os.getenv("GOOGLE_REDIRECT_URI"),
-        "grant_type": "authorization_code"
-    }
+        print("User info fetched:", user_info)
 
-    r = requests.post(GOOGLE_TOKEN_URL, data=data)
-    tokens = r.json()
-    print(tokens)
+        return JSONResponse({
+            "access_token": credentials.token,
+            "refresh_token": credentials.refresh_token,
+            "email": user_info.get("email"),
+            "name": user_info.get("name"),
+        })
 
-    # tokens contains access_token + refresh_token
-    # Save refresh_token in your DB for that user
-    return tokens
+    except Exception as e:
+        print("Exception occurred in callback:", e)
+        raise HTTPException(status_code=500, detail=str(e))
