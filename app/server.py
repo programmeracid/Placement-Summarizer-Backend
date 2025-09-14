@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 import os
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
-from uuid_generator import deterministic_uuid_from_email
+from app.uuid_generator import deterministic_uuid_from_email
 
 load_dotenv()
 CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
@@ -108,11 +108,14 @@ async def google_auth_callback(request: Request):
         user_info = user_info_service.userinfo().get().execute()
 
         uid = deterministic_uuid_from_email(user_info.get("email"))
-
+        uid = str(uid)
         print("User info fetched:", user_info)
 
         user = f_get_user(uid)
+
+
         if user:
+            save_refresh_token(uid, credentials.refresh_token)
             return user
         raise HTTPException(status_code=404, detail=f"User {uid} not found.")
 
