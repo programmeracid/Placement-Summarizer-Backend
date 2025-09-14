@@ -7,6 +7,11 @@ import pandas as pd
 from io import BytesIO
 from bs4 import BeautifulSoup
 import re
+import json
+
+from email_scraper import extract_email_info
+from excel_parser import parse_excel
+from checkMail import strict_check
 
 load_dotenv()
 
@@ -80,7 +85,7 @@ def get_message_details(service, message_id: str):
 
                 # If it's an Excel sheet, read directly into pandas
                 if filename.endswith((".xlsx", ".xls")):
-                    df = pd.read_excel(BytesIO(file_data))
+                    df = pd.read_excel(BytesIO(file_data), header=None)
                     dataframes.append({"filename": filename, "dataframe": df})
 
             if "parts" in part:
@@ -106,6 +111,12 @@ def get_message_details(service, message_id: str):
         "excel_attachments": dataframes,  # list of {"filename": str, "dataframe": pd.DataFrame}
     }
 
+def is_placement_email(details):
+    if "Helpdesk CDC" in details["from"] or "VITCC Placement" in details["from"]:
+        return strict_check(details)
+    else:
+        return strict_check(details)
+
 def read_user_emails(access_token: str):
     creds = Credentials(token=access_token)
     service = build("gmail", "v1", credentials=creds)
@@ -116,13 +127,35 @@ def read_user_emails(access_token: str):
     email_details = []
     for m in messages:
         details = get_message_details(service, m["id"])
+        if not is_placement_email(details):
+            print(f"\n!!!\nEmail with subject:\n<{details['subject']}> rejected\nSender:\n{details['from']}")
+            continue
+        print(f"\nEmail with subject:\n<{details['subject']}> accepted\nSender:\n{details['from']}")
         email_details.append(details)
 
     return email_details
 
+def parse_email(email: dict):
+    body = email["body"]
+    attachments = email["excel_attachments"]
+    email_info = extract_email_info(body)
+    email_info = email_info.strip('\\njson` ')
+    email_info = json.loads(email_info.replace("\n",""))
+    # print(email_info.keys())
+    for i in email_info:
+        if str(email_info[i]).strip()=="False":
+            email_info[i]=False
+    shortlists = []
+    for i in attachments:
+        shortlists.append(parse_excel(i['dataframe']))
+    email_info["shortlists"]=shortlists
+    return email_info
 
 if __name__ == "__main__":
     refresh_token = ""
     access_token = get_access_token(refresh_token)
     emails = read_user_emails(access_token)
-    print(*emails, sep = '\n')
+    # print(*emails, sep = '\n')
+    # print(emails[0])
+    for email in emails:
+        print(parse_email(email)) 
