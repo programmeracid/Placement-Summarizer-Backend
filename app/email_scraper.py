@@ -16,12 +16,60 @@ client=genai.Client(api_key=gemini_api_key)
 # "gemma-3-27b-it"
 # "gemini-2.0-flash-lite"
 
+"""
+from the above email body, extract the following information and present it in a json format:
+Company Name 
+
+Scope (Internship/Placement/Internship leading to Placement)
+
+Type of event (Online Assessment/Interview/Registration/others)
+
+Date
+
+Start Time
+
+End Time
+
+Short Description
+
+Forms/Registrations required 
+
+If such info can not be scraped from the email body simply return:
+{False}
+
+Remember to be as concise and to the point as possible, return ONLY the json and NOTHING ELSE
+ """
+
 def extract_email_info(email_body: str) -> str:
+    instructions = """from the above email body, extract the following information and present it in a json format:
+Company Name 
+
+Scope (Internship/Placement/Internship leading to Placement)
+
+Type of event (Physical Process/Selection Process/Online Assessment/Online Test/Interview/Registration/others)
+
+Date
+
+Start Time
+
+End Time
+
+Short Description
+
+Forms/Registrations required 
+
+If such info can not be scraped from the email body simply return False
+
+If u find a table containing eligible students, return a list of their rgister numbers ONLY in a new field in the JSON called "eligible students"
+,otherwise return False in the same field
+
+Remember to be as concise and to the point as possible, return ONLY the json and NOTHING ELSE
+ """
     response = client.models.generate_content(
         model=model,
-        contents=email_body
+        contents=email_body+instructions
     )
-    return response.text, len(response.text)
+    return response.text #, len(response.text)
 
 text=r"""Marquee Internship /  Placement – 2026 Batch
  
@@ -219,7 +267,7 @@ Company Name
 
 Scope (Internship/Placement/Internship leading to Placement)
 
-Type of event (Online Assessment/Interview/Registration/others)
+Type of event (Online Assessment/Interview/Registration/Pre Placement Talk)
 
 Date
 
@@ -230,6 +278,11 @@ End Time
 Short Description
 
 Forms/Registrations required 
+
+If such info can not be scraped from the email body simply return:
+{False}
+
+Remember to be as concise and to the point as possible, return ONLY the json and NOTHING ELSE
  """
 
 
