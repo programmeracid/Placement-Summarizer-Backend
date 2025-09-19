@@ -85,39 +85,26 @@ async def get_branches():
 @app.post("/api/auth/google/callback")
 async def google_auth_callback(request: Request):
     data = await request.json()
-    print("Raw request data:", data)
-
     code = data.get("code")
     if not code:
         raise HTTPException(status_code=400, detail="Missing authorization code")
 
-    flow = Flow.from_client_secrets_file(
-        'credentials.json',
-        scopes=SCOPES,
-        redirect_uri=REDIRECT_URI
-    )
-
-    print("Auth flow initialized")
     try:
-        # Exchange the code for tokens
+        flow = Flow.from_client_secrets_file(
+            "credentials.json",
+            scopes=SCOPES,
+            redirect_uri=REDIRECT_URI
+        )
         flow.fetch_token(code=code)
         credentials = flow.credentials
 
-        # Get user info
         user_info_service = build("oauth2", "v2", credentials=credentials)
         user_info = user_info_service.userinfo().get().execute()
 
-        uid = deterministic_uuid_from_email(user_info.get("email"))
-        uid = str(uid)
-        print("User info fetched:", user_info)
+        uid = str(deterministic_uuid_from_email(user_info.get("email")))
 
-        user = f_get_user(uid)
-
-
-        if user:
+        if credentials.refresh_token:
             save_refresh_token(uid, credentials.refresh_token)
-            return user
-        raise HTTPException(status_code=404, detail=f"User {uid} not found.")
 
         return JSONResponse({
             "access_token": credentials.token,
@@ -125,6 +112,10 @@ async def google_auth_callback(request: Request):
             "email": user_info.get("email"),
             "name": user_info.get("name"),
         })
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Google auth failed: {str(e)}")
+
 
     except Exception as e:
         print("Exception occurred in callback:", e)

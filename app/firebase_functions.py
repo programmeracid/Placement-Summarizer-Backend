@@ -45,6 +45,22 @@ def f_get_branches():
     docs = db.collection("branches").stream()
     return [doc.to_dict()["name"] for doc in docs]
 
+def save_refresh_token():
+    pass
+
+def save_refresh_token(uid: str, refresh_token: str):
+    """Store user token in Firestore 'tokens' collection"""
+    doc_ref = db.collection("tokens").document(uid)
+    doc_ref.set({"refresh_token": refresh_token}, merge=True)
+
+
+def get_refresh_token(uid: str) -> str | None:
+    """Retrieve user token from Firestore 'tokens' collection"""
+    doc_ref = db.collection("tokens").document(uid).get()
+    if doc_ref.exists:
+        return doc_ref.to_dict().get("refresh_token")
+    return None
+
 if __name__ == "__main__":
     print(f_get_branches())
 
