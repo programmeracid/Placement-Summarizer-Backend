@@ -163,7 +163,8 @@ def parse_pubsub_message(pubsub_message):
     
 
 
-def fetch_new_messages(service, start_history_id):
+def fetch_new_messages(service, history_id):
+    start_history_id = open('history_file.txt').read().strip('\n')
     history = service.users().history().list(
         userId="me",
         startHistoryId=start_history_id,
@@ -172,6 +173,8 @@ def fetch_new_messages(service, start_history_id):
 
     messages = []
     print(history)
+    with open('history_file.txt', 'w') as f:
+        f.write(history['historyId'])
     if "history" in history:
         for record in history["history"]:
             if "messagesAdded" in record:
