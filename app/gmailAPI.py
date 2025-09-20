@@ -152,6 +152,27 @@ def parse_email(email: dict):
     return email_info
 
 
+def parse_pubsub_message(pubsub_message):
+    data = pubsub_message["message"]["data"]
+    decoded = base64.b64decode(data).decode("utf-8")
+    return json.loads(decoded)
+
+def fetch_new_messages(service, start_history_id):
+    history = service.users().history().list(
+        userId="me",
+        startHistoryId=start_history_id,
+        historyTypes=["messageAdded"]
+    ).execute()
+
+    messages = []
+    if "history" in history:
+        for record in history["history"]:
+            if "messagesAdded" in record:
+                for m in record["messagesAdded"]:
+                    messages.append(m["message"]["id"])  # ✅ THIS is the Gmail message.id
+    return messages[0]
+
+
 def read_latest_mail(access_token, message_id):
     creds = Credentials(token=access_token)
     service = build("gmail", "v1", credentials=creds)
