@@ -200,7 +200,7 @@ def read_latest_mail(access_token, message):
     details = get_message_details(service, message_id)
     if not is_placement_email(details):
         print(f"\n!!!\nEmail with subject:\n<{details['subject']}> rejected\nSender:\n{details['from']}")
-            
+        return details      
     print(f"\nEmail with subject:\n<{details['subject']}> accepted\nSender:\n{details['from']}")
     email = parse_email(details)
     return email
