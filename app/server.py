@@ -162,6 +162,8 @@ async def google_auth_callback(request: Request):
 async def get_post_notification(request: Request):
     data = await request.json()
     message_id = data.get("message_id")
+    print(data)
+    print(message_id)
     access_token = get_access_token(GORAV_REFRESH_TOKEN)
     email = read_latest_mail(access_token, message_id)
 
