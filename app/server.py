@@ -124,5 +124,6 @@ async def google_auth_callback(request: Request):
 
 @app.post("/api/push-notification")
 async def get_post_notification(request: Request):
-    print(request)
+    data = await request.json()
+    print(data)
     return {"message": f"got smth"}
