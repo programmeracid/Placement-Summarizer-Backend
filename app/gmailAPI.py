@@ -173,9 +173,11 @@ def fetch_new_messages(service, start_history_id):
     return messages[0]
 
 
-def read_latest_mail(access_token, message_id):
+def read_latest_mail(access_token, message):
     creds = Credentials(token=access_token)
     service = build("gmail", "v1", credentials=creds)
+    message = parse_pubsub_message(message)
+    message_id = fetch_new_messages(service, message['historyId'])
     details = get_message_details(service, message_id)
     if not is_placement_email(details):
         print(f"\n!!!\nEmail with subject:\n<{details['subject']}> rejected\nSender:\n{details['from']}")
