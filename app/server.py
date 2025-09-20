@@ -168,4 +168,4 @@ async def get_post_notification(request: Request):
     print('nob')
     print(email)
 
-    return {"message" : "nob"}
+    return {"message" : "OK"}
