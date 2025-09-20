@@ -155,6 +155,7 @@ def parse_email(email: dict):
 def parse_pubsub_message(pubsub_message):
     data = pubsub_message["message"]["data"]
     decoded = base64.b64decode(data).decode("utf-8")
+    print(decoded)
     return json.loads(decoded)
 
 def fetch_new_messages(service, start_history_id):
