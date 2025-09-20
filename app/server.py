@@ -13,7 +13,7 @@ from app.uuid_generator import deterministic_uuid_from_email
 load_dotenv()
 CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
 CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
-REDIRECT_URI = os.getenv('REDIRECT_URI')
+REDIRECT_URI = os.getenv('GOOGLE_REDIRECT_URI')
 SCOPES = [
     "openid",
     "https://www.googleapis.com/auth/userinfo.email",
@@ -92,9 +92,9 @@ async def google_auth_callback(request: Request):
     try:
         client_config = {
             "web": {
-                "client_id": os.environ["GOOGLE_CLIENT_ID"],
-                "client_secret": os.environ["GOOGLE_CLIENT_SECRET"],
-                "redirect_uris": [os.environ.get("GOOGLE_REDIRECT_URI", "http://localhost:8000/api/auth/google/callback")],
+                "client_id": CLIENT_ID,
+                "client_secret": CLIENT_SECRET,
+                "redirect_uris": REDIRECT_URI,
                 "auth_uri": "https://accounts.google.com/o/oauth2/auth",
                 "token_uri": "https://oauth2.googleapis.com/token"
             }
@@ -103,14 +103,17 @@ async def google_auth_callback(request: Request):
         flow = Flow.from_client_config(
             client_config,
             scopes=SCOPES,
-            redirect_uri=os.environ.get("GOOGLE_REDIRECT_URI", "http://localhost:8000/api/auth/google/callback")
+            redirect_uri=REDIRECT_URI
         )
+        print(flow)
         flow.fetch_token(code=code)
+
         credentials = flow.credentials
+        print(credentials)
 
         user_info_service = build("oauth2", "v2", credentials=credentials)
         user_info = user_info_service.userinfo().get().execute()
-        
+        print(user_info)
         email = user_info.get("email")
         url = f"https://gmail.googleapis.com/gmail/v1/users/{email}/watch"
         data = {
