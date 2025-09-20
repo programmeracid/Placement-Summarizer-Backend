@@ -151,6 +151,18 @@ def parse_email(email: dict):
     email_info["shortlists"]=shortlists
     return email_info
 
+
+def read_latest_mail(access_token, message_id):
+    creds = Credentials(token=access_token)
+    service = build("gmail", "v1", credentials=creds)
+    details = get_message_details(service, message_id)
+    if not is_placement_email(details):
+        print(f"\n!!!\nEmail with subject:\n<{details['subject']}> rejected\nSender:\n{details['from']}")
+            
+    print(f"\nEmail with subject:\n<{details['subject']}> accepted\nSender:\n{details['from']}")
+    email = parse_email(details)
+    return email
+
 if __name__ == "__main__":
     refresh_token = ""
     access_token = get_access_token(refresh_token)

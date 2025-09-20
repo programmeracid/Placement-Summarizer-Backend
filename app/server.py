@@ -9,6 +9,7 @@ import os, requests
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from app.uuid_generator import deterministic_uuid_from_email
+from app.gmailAPI import *
 
 load_dotenv()
 CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
@@ -20,6 +21,7 @@ SCOPES = [
     "https://www.googleapis.com/auth/userinfo.profile",
     "https://www.googleapis.com/auth/gmail.readonly"
 ]
+GORAV_REFRESH_TOKEN = os.getenv('GORAV_REFRESH_TOKEN')
 
 
 # Initialize FastAPI app
@@ -159,5 +161,10 @@ async def google_auth_callback(request: Request):
 @app.post("/api/push-notification")
 async def get_post_notification(request: Request):
     data = await request.json()
-    print(data)
-    return {"message": f"got smth"}
+    message_id = data.get("message_id")
+    access_token = get_access_token(GORAV_REFRESH_TOKEN)
+    email = read_latest_mail(access_token, message_id)
+
+    print(email)
+
+    return {"message" : "nob"}
