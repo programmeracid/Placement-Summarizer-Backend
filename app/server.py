@@ -5,7 +5,7 @@ from typing import Optional
 from app.firebase_functions import *
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
-import os
+import os, requests
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from app.uuid_generator import deterministic_uuid_from_email
@@ -100,8 +100,21 @@ async def google_auth_callback(request: Request):
 
         user_info_service = build("oauth2", "v2", credentials=credentials)
         user_info = user_info_service.userinfo().get().execute()
+        
+        email = user_info.get("email")
+        url = f"https://gmail.googleapis.com/gmail/v1/users/{email}/watch"
+        data = {
+        "labelIds": [
+            "INBOX"
+        ],
+        "topicName": "projects/placement-tracker-471904/topics/read-emails"
+        }
+        response = requests.post(url, json=data)
 
-        uid = str(deterministic_uuid_from_email(user_info.get("email")))
+        print("Status:", response.status_code)
+        print("Response JSON:", response.json())
+
+        uid = str(deterministic_uuid_from_email(email))
 
         if credentials.refresh_token:
             save_refresh_token(uid, credentials.refresh_token)
