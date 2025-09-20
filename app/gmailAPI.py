@@ -177,8 +177,11 @@ def fetch_new_messages(service, start_history_id):
 def read_latest_mail(access_token, message):
     creds = Credentials(token=access_token)
     service = build("gmail", "v1", credentials=creds)
+    print(message)
     message = parse_pubsub_message(message)
+    print(message)
     messages = fetch_new_messages(service, message['historyId'])
+    print(messages)
     if len(messages) == 0:
         return "No New Email"
 
