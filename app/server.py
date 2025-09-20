@@ -163,13 +163,9 @@ async def get_post_notification(request: Request):
     data = await request.json()
     
     print(data)
-    message = parse_pubsub_message(data)
-    print(message)
-    message_id = fetch_new_messages(message['historyId'])
-    print(message)
     access_token = get_access_token(GORAV_REFRESH_TOKEN)
-    email = read_latest_mail(access_token, message_id)
-
+    email = read_latest_mail(access_token, data)
+    print('nob')
     print(email)
 
     return {"message" : "nob"}
