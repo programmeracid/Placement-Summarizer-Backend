@@ -9,3 +9,4 @@ pydantic==2.11.9
 python-dotenv==1.1.1
 Requests==2.32.5
 uvicorn
+google-genai
