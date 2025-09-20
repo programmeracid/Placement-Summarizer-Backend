@@ -156,8 +156,10 @@ def parse_pubsub_message(pubsub_message):
     data = pubsub_message["message"]["data"]
     decoded = base64.b64decode(data).decode("utf-8")
     print(decoded)
-
-    return json.loads(decoded)
+    try:
+        return json.loads(decoded)
+    except:
+        return decoded
     
 
 
@@ -182,8 +184,9 @@ def read_latest_mail(access_token, message):
     creds = Credentials(token=access_token)
     service = build("gmail", "v1", credentials=creds)
     print(message)
-    #message = parse_pubsub_message(message)
-    
+    message = parse_pubsub_message(message)
+    if type(message) == str:
+        return message
     messages = fetch_new_messages(service, message['historyId'])
     print(messages)
     if len(messages) == 0:
