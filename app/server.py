@@ -120,3 +120,9 @@ async def google_auth_callback(request: Request):
     except Exception as e:
         print("Exception occurred in callback:", e)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/postNoti/")
+async def get_post_notification(request: Request):
+    print(request)
+    return {"message": f"got smth"}
