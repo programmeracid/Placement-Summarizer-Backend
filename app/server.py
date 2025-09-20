@@ -90,10 +90,20 @@ async def google_auth_callback(request: Request):
         raise HTTPException(status_code=400, detail="Missing authorization code")
 
     try:
-        flow = Flow.from_client_secrets_file(
-            "credentials.json",
+        client_config = {
+            "web": {
+                "client_id": os.environ["GOOGLE_CLIENT_ID"],
+                "client_secret": os.environ["GOOGLE_CLIENT_SECRET"],
+                "redirect_uris": [os.environ.get("GOOGLE_REDIRECT_URI", "http://localhost:8000/api/auth/google/callback")],
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token"
+            }
+        }
+
+        flow = Flow.from_client_config(
+            client_config,
             scopes=SCOPES,
-            redirect_uri=REDIRECT_URI
+            redirect_uri=os.environ.get("GOOGLE_REDIRECT_URI", "http://localhost:8000/api/auth/google/callback")
         )
         flow.fetch_token(code=code)
         credentials = flow.credentials
