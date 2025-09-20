@@ -85,6 +85,7 @@ async def get_branches():
 @app.post("/api/auth/google/callback")
 async def google_auth_callback(request: Request):
     data = await request.json()
+    
     code = data.get("code")
     if not code:
         raise HTTPException(status_code=400, detail="Missing authorization code")
@@ -105,6 +106,7 @@ async def google_auth_callback(request: Request):
             scopes=SCOPES,
             redirect_uri=REDIRECT_URI
         )
+        print(data)
         print(flow)
         flow.fetch_token(code=code)
 
