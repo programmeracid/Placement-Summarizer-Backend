@@ -9,9 +9,9 @@ from bs4 import BeautifulSoup
 import re
 import json
 
-from email_scraper import extract_email_info
-from excel_parser import parse_excel
-from checkMail import strict_check
+from app.email_scraper import extract_email_info
+from app.excel_parser import parse_excel
+from app.checkMail import strict_check
 
 load_dotenv()
 
