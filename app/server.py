@@ -124,7 +124,13 @@ async def google_auth_callback(request: Request):
         ],
         "topicName": "projects/placement-tracker-471904/topics/read-emails"
         }
-        response = requests.post(url, json=data)
+        
+        access_token = credentials.token   # from your Google OAuth flow
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        }
+        response = requests.post(url, json=data, headers=headers)
 
         print("Status:", response.status_code)
         print("Response JSON:", response.json())
